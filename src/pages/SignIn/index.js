@@ -1,8 +1,10 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Form, Input } from '@rocketseat/unform';
+import { Form } from '@unform/web';
 import * as Yup from 'yup';
+
+import Input from '../../components/Input';
 
 import { signInRequest } from '../../store/modules/auth/actions';
 
@@ -16,9 +18,25 @@ const schema = Yup.object().shape({
 });
 
 export default function SignIn() {
+  const formRef = useRef(null);
   const dispatch = useDispatch();
+  const loading = useSelector(state => state.auth.loading);
 
-  function handleSubmit({ email, password }) {
+  async function handleSubmit({ email, password }) {
+    try {
+      await schema.validate({ email, password }, { abortEarly: false });
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errorMessages = {};
+
+        err.inner.forEach(error => {
+          errorMessages[error.path] = error.message;
+        });
+
+        formRef.current.setErrors(errorMessages);
+      }
+    }
+
     dispatch(signInRequest(email, password));
   }
 
@@ -26,7 +44,7 @@ export default function SignIn() {
     <>
       <img src={logo} alt="GoBarber" />
 
-      <Form schema={schema} onSubmit={handleSubmit}>
+      <Form ref={formRef} onSubmit={handleSubmit}>
         <Input name="email" type="email" placeholder="Seu e-mail" />
         <Input
           name="password"
@@ -34,7 +52,7 @@ export default function SignIn() {
           placeholder="Sua senha secreta"
         />
 
-        <button type="submit">Acessar</button>
+        <button type="submit">{loading ? 'Carregando...' : 'Acessar'}</button>
         <Link to="/register">Criar conta gratuita</Link>
       </Form>
     </>

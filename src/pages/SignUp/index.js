@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Form, Input } from '@rocketseat/unform';
+import { Form } from '@unform/web';
 import * as Yup from 'yup';
+
+import Input from '../../components/Input';
+
+import { signUpRequest } from '../../store/modules/auth/actions';
 
 import logo from '../../assets/logo.svg';
 
@@ -16,15 +21,33 @@ const schema = Yup.object().shape({
 });
 
 export default function SignUp() {
-  function handleSubmit(data) {
-    console.log(data);
+  const formRef = useRef(null);
+  const dispatch = useDispatch();
+  const loading = useSelector(state => state.auth.loading);
+
+  async function handleSubmit({ name, email, password }) {
+    try {
+      await schema.validate({ name, email, password }, { abortEarly: false });
+
+      dispatch(signUpRequest(name, email, password));
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errorMessages = {};
+
+        err.inner.forEach(error => {
+          errorMessages[error.path] = error.message;
+        });
+
+        formRef.current.setErrors(errorMessages);
+      }
+    }
   }
 
   return (
     <>
       <img src={logo} alt="GoBarber" />
 
-      <Form schema={schema} onSubmit={handleSubmit}>
+      <Form ref={formRef} onSubmit={handleSubmit}>
         <Input name="name" placeholder="Nome completo" />
         <Input name="email" type="email" placeholder="Seu e-mail" />
         <Input
@@ -33,7 +56,9 @@ export default function SignUp() {
           placeholder="Sua senha secreta"
         />
 
-        <button type="submit">Criar conta</button>
+        <button type="submit">
+          {loading ? 'Carregando...' : 'Criar conta'}
+        </button>
         <Link to="/">Já tenho login</Link>
       </Form>
     </>
