@@ -3,6 +3,7 @@ import { Form } from '@unform/web';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { updateProfileRequest } from '../../store/modules/user/actions';
+import { signOut } from '../../store/modules/auth/actions';
 
 import AvatarInput from './AvatarInput';
 import Input from '../../components/Input';
@@ -15,6 +16,10 @@ export default function Profile() {
 
   function handleSubmit(data) {
     dispatch(updateProfileRequest(data));
+  }
+
+  function handleSignOut() {
+    dispatch(signOut());
   }
 
   return (
@@ -33,7 +38,9 @@ export default function Profile() {
         <button type="submit">Update profile</button>
       </Form>
 
-      <button type="button">Logout</button>
+      <button type="button" onClick={handleSignOut}>
+        Logout
+      </button>
     </Container>
   );
 }
